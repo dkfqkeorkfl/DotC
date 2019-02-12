@@ -63,7 +63,7 @@ namespace DC
 
 		public float height_conversation {
 			get { 
-				return rectTrasform .rect.height;
+				return rectTrasform.rect.height;
 			}
 		}
 
