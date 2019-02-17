@@ -6,46 +6,48 @@ namespace DC
 {
 	public class CTalk : MonoBehaviour {
 
-		const float width_ratio_nick = 0.3f;
-		const float width_ratio_converstion = 1.0f - width_ratio_nick;
+//		const float nratio = 0.3f;
+//		const float cratio = 1.0f - nratio;
 
 		bool mIsMe = true;
-		UnityEngine.UI.Text mNick = null, mConversation = null;
-		RectTransform mRectTranf = null;
 
 		public bool is_me {
 			get {
 				return mIsMe;
 			}
 			set { 
-				is_me = value;
+				mIsMe = value;
 				if (is_me) {
-					nick_comp.transform.SetAsFirstSibling ();
+					var prev = conversation_comp.transform;
+					prev.parent = null;
+					prev.parent = this.transform;
+					nick_comp.alignment = TextAnchor.MiddleLeft;
+					conversation_comp.alignment = TextAnchor.MiddleLeft;
 				} else {
-					conversation_comp.transform.SetAsLastSibling ();
+					var prev = nick_comp.transform;
+					prev.parent = null;
+					prev.parent = this.transform;
+					nick_comp.alignment = TextAnchor.MiddleRight;
+					conversation_comp.alignment = TextAnchor.MiddleRight;
 				}
 			}
 		}
 
 		private UnityEngine.UI.Text nick_comp { 
 			get {
-				if(mNick == null)
-					mNick = transform.Find ("Nick").GetComponent<UnityEngine.UI.Text> ();
-				return mNick;
+				return transform.Find ("Nick").GetComponent<UnityEngine.UI.Text> ();
 			}
 		}
 
 		private UnityEngine.UI.Text conversation_comp { 
 			get {
-				if(mConversation == null)
-					mConversation = transform.Find ("Conversation").GetComponent<UnityEngine.UI.Text> ();
-				return mConversation;
+				return transform.Find ("Conversation").GetComponent<UnityEngine.UI.Text> ();
 			}
 		}
 
 		public string nick {
 			set {
-				nick_comp.text = value;
+				nick_comp.text = value + " :";
 			}
 			get { 
 				return nick_comp.text;
@@ -61,31 +63,42 @@ namespace DC
 			}
 		}
 
-		public float height_conversation {
+		public float height {
 			get { 
-				return rectTrasform.rect.height;
+				return rectTransform.rect.height;
 			}
 		}
 
-		public RectTransform rectTrasform { 
+		public RectTransform rectTransform { 
 			get { 
-				if( mRectTranf == null)
-					mRectTranf = (UnityEngine.RectTransform)this.transform;
-				return mRectTranf;
+				return (UnityEngine.RectTransform)this.transform;
 			} 
 		}
 
-		void Awake() {
+		public float width { get; set; }
+		public float nratio { get; set; } /* name ratio of width */
 
-			var padding = rectTrasform.parent.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
-			var width = (rectTrasform.parent.transform as UnityEngine.RectTransform).rect.width - padding.horizontal;
-			var width_nick = width_ratio_nick * width;
-			var width_converstion = width_ratio_converstion * width;
+		public void Vaildate()
+		{
+			var nwidth = nratio * width;
+			var cwidth = (1.0f - nratio) * width;
 
-			var rtrasf_nick = nick_comp.rectTransform;
-			rtrasf_nick.sizeDelta = new Vector2(width_nick, rtrasf_nick.sizeDelta.y);
-			var rtrasf_conversation = conversation_comp.rectTransform;
-			rtrasf_conversation.sizeDelta = new Vector2 (width_converstion, rtrasf_conversation.sizeDelta.y);
+			var ntransf = nick_comp.rectTransform;
+			ntransf.sizeDelta = new Vector2(nwidth, ntransf.sizeDelta.y);
+			var ctransf = conversation_comp.rectTransform;
+			ctransf.sizeDelta = new Vector2 (cwidth, ctransf.sizeDelta.y);
 		}
+
+//		void Awake() {
+//			var padding = rectTrasform.parent.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
+//			var width = (rectTrasform.parent.transform as UnityEngine.RectTransform).rect.width - padding.horizontal;
+//			var nwidth = nratio * width;
+//			var cwidth = cratio * width;
+//
+//			var ntransf = nick_comp.rectTransform;
+//			ntransf.sizeDelta = new Vector2(nwidth, ntransf.sizeDelta.y);
+//			var ctransf = conversation_comp.rectTransform;
+//			ctransf.sizeDelta = new Vector2 (cwidth, ctransf.sizeDelta.y);
+//		}
 	}
 }

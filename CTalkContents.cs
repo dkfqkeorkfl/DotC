@@ -15,6 +15,7 @@ namespace DC
 
 		void Awake ()
 		{
+			count = 0;
 			rectTranform = transform as RectTransform;
 
 			var talk_padding = GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
@@ -24,17 +25,16 @@ namespace DC
 			rectTranform.sizeDelta = new Vector2 (0, minest_height);
 		}
 
+		public int count { get; private set; }
 		public void Add (CTalk talk)
 		{
+			count += 1;
 			rectTranform.sizeDelta = new Vector2 (0, minest_height + height_talks);
 			UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate (rectTranform);
-			height_talks += talk.height_conversation;
+			height_talks += talk.height;
 
 			var height_updated = Mathf.Max (minest_height, height_talks);
 			rectTranform.sizeDelta = new Vector2 (0, height_updated);
-
-			var print = string.Format ("height{0} argc({1})", height_talks, talk.height_conversation);
-			Debug.Log (print);
 		}
 	}
 
