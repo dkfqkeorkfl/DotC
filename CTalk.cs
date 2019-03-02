@@ -6,9 +6,6 @@ namespace DC
 {
 	public class CTalk : MonoBehaviour {
 
-//		const float nratio = 0.3f;
-//		const float cratio = 1.0f - nratio;
-
 		bool mIsMe = true;
 
 		public bool is_me {
@@ -17,19 +14,6 @@ namespace DC
 			}
 			set { 
 				mIsMe = value;
-				if (is_me) {
-					var prev = conversation_comp.transform;
-					prev.parent = null;
-					prev.parent = this.transform;
-					nick_comp.alignment = TextAnchor.MiddleLeft;
-					conversation_comp.alignment = TextAnchor.MiddleLeft;
-				} else {
-					var prev = nick_comp.transform;
-					prev.parent = null;
-					prev.parent = this.transform;
-					nick_comp.alignment = TextAnchor.MiddleRight;
-					conversation_comp.alignment = TextAnchor.MiddleRight;
-				}
 			}
 		}
 
@@ -47,7 +31,7 @@ namespace DC
 
 		public string nick {
 			set {
-				nick_comp.text = value + " :";
+				nick_comp.text = value;
 			}
 			get { 
 				return nick_comp.text;
@@ -74,31 +58,5 @@ namespace DC
 				return (UnityEngine.RectTransform)this.transform;
 			} 
 		}
-
-		public float width { get; set; }
-		public float nratio { get; set; } /* name ratio of width */
-
-		public void Vaildate()
-		{
-			var nwidth = nratio * width;
-			var cwidth = (1.0f - nratio) * width;
-
-			var ntransf = nick_comp.rectTransform;
-			ntransf.sizeDelta = new Vector2(nwidth, ntransf.sizeDelta.y);
-			var ctransf = conversation_comp.rectTransform;
-			ctransf.sizeDelta = new Vector2 (cwidth, ctransf.sizeDelta.y);
-		}
-
-//		void Awake() {
-//			var padding = rectTrasform.parent.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
-//			var width = (rectTrasform.parent.transform as UnityEngine.RectTransform).rect.width - padding.horizontal;
-//			var nwidth = nratio * width;
-//			var cwidth = cratio * width;
-//
-//			var ntransf = nick_comp.rectTransform;
-//			ntransf.sizeDelta = new Vector2(nwidth, ntransf.sizeDelta.y);
-//			var ctransf = conversation_comp.rectTransform;
-//			ctransf.sizeDelta = new Vector2 (cwidth, ctransf.sizeDelta.y);
-//		}
 	}
 }

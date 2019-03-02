@@ -18,24 +18,20 @@ namespace DC
 		{
 			var input = this.gameObject.GetComponent<UnityEngine.UI.InputField> ();
 			input.characterLimit = 0;
+			
 			input.OnEndEditAsObservable ()
 				.Select(x=> {
 					if (x.Length == 0)
-					{
-						Debug.Log(x);
 						return x;
-					}
+					
 					input.enabled = false;
 					input.text = "";
 
 					var prefab = Resources.Load<DC.CTalk> ("Talk");
 					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
 					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding;
-					inst.width = (transform as UnityEngine.RectTransform).rect.width - padding.horizontal;
-					inst.nratio = 0.2f;
 					inst.nick = "11";
 					inst.conversation = x;
-					inst.Vaildate();
 					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
 
 					return x;
