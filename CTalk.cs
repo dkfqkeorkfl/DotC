@@ -14,6 +14,10 @@ namespace DC
 			}
 			set { 
 				mIsMe = value;
+				if (mIsMe) {
+					nick_comp.color = new Color32 (0, 0, 255, 255);
+					conversation_comp.color = new Color32 (0, 0, 255, 255);
+				}
 			}
 		}
 

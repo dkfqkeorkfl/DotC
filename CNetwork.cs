@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using Sas;
+using UniRx;
 namespace DC
 {
 	public class CNetwork : MonoBehaviour 
@@ -24,11 +25,16 @@ namespace DC
 				return false;
 
 			foreach (var pr in mErrHandles) {
-				if (pr.Key.IsMatch (e.GetErrstr()))
+				if (pr.Key.IsMatch (e.ToErrstrOfSas()))
 					return true;
 			}
 
 			return false;
+		}
+
+		public static IObservable<Sas.Net.ClientSocket> ConnectRelay (string url)
+		{
+			return Sas.Net.ClientSocket.Connect (url);
 		}
 			
 		public void AddHnadleErr(
@@ -47,7 +53,7 @@ namespace DC
 
 			AddHnadleErr (new System.Text.RegularExpressions.Regex (".*"), (erq, err) => {
 				if(string.IsNullOrEmpty(err.Message))
-					CModal.Make("", err.GetErrstr()).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close();
+					CModal.Make("", err.ToErrstrOfSas()).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close();
 				else
 					CModal.Make("", err.Message).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close();
 			});
@@ -56,7 +62,7 @@ namespace DC
 				if(err == null)
 					return;
 				var exception = err as Sas.Exception;
-				var desc = Enum.GetName (typeof(Sas.ERRNO), exception != null ? exception.errno : Sas.ERRNO.UNKNOWN);
+				var desc = Enum.GetName (typeof(Sas.ERRNO), exception != null ? exception.ToErrnoOfSas() : Sas.ERRNO.UNKNOWN);
 
 				foreach (var pr in mErrHandles) {
 					if (pr.Key.IsMatch (desc))

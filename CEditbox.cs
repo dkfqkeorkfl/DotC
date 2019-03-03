@@ -32,6 +32,7 @@ namespace DC
 					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding;
 					inst.nick = "11";
 					inst.conversation = x;
+					inst.is_me = true;
 					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
 
 					return x;

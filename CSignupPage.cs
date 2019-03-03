@@ -40,7 +40,7 @@ namespace DC
 
 				.SelectMany (_ => {
 				if (mPasswordFld.text != mPasswordConfirmFld.text)
-					throw new ExceptionWithMsg ("missmatch password and confirm password. please check that a both is matched.");
+						throw new System.Exception ("missmatch password and confirm password. please check that a both is matched.");
 
 				return DC.CNetwork.s.platform.account.Authentication ();
 			})
@@ -58,7 +58,7 @@ namespace DC
 
 					return DC.CNetwork.s.platform.account.SignUp (signup_param);
 				} else
-					throw new Sas.Exception (Sas.ERRNO.MESSAGE, "make sure that authentication.");
+					throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCodeOfSas(), "make sure that authentication.");
 			})
 				.Repeat ()
 				.Subscribe (ret => {
@@ -68,7 +68,7 @@ namespace DC
 				err => {
 					if (!CNetwork.s.ContainHandleErr (err)) {
 						if (string.IsNullOrEmpty (err.Message))
-							CModal.Make ("", err.GetErrstr ()).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
+							CModal.Make ("", err.ToErrstrOfSas ()).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
 						else
 							CModal.Make ("", err.Message).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
 					}
