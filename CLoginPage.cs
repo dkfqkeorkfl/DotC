@@ -47,7 +47,7 @@ namespace DC {
 
                         return DC.CNetwork.s.platform.account.Login (login_param);
                     } else
-						throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCodeOfSas(), "make sure that authentication.");
+						throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCode(), "make sure that authentication.");
                 })
                 .SelectMany (_ => DC.CNetwork.s.platform.account.AccessOpen ())
                 .SelectMany (_ => DC.CNetwork.s.platform.account.DumpAutoLogin ("test"))

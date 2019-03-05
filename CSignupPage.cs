@@ -58,7 +58,7 @@ namespace DC
 
 					return DC.CNetwork.s.platform.account.SignUp (signup_param);
 				} else
-					throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCodeOfSas(), "make sure that authentication.");
+					throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCode(), "make sure that authentication.");
 			})
 				.Repeat ()
 				.Subscribe (ret => {

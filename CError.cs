@@ -25,7 +25,7 @@ namespace DC
 
 		}
 
-		public static long ToErrCodeOfDC(this ERRNO e)
+		public static long ToErrCode(this ERRNO e)
 		{
 			return mapper.ToHash (e);
 		}
