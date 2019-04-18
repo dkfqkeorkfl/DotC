@@ -11,7 +11,7 @@ namespace DC
 
 	public static class ExceptionExt
 	{
-		static Sas.Emaaper<DC.ERRNO> mapper = new Sas.Emaaper<ERRNO>();
+		static Sas.Emapper<DC.ERRNO> mapper = new Sas.Emapper<ERRNO>();
 		public static ERRNO ToErrnoOfDC(this System.Exception e)
 		{
 			var exception = e as Sas.Exception;

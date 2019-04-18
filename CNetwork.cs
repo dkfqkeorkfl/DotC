@@ -32,9 +32,12 @@ namespace DC
 			return false;
 		}
 
-		public static IObservable<Sas.Net.ClientSocket> ConnectRelay (string url)
+		public Sas.Net.WebsocketMgr socket_mgr { get; private set; }
+		public static IObservable<Sas.Net.Websocket> ConnectRelay (string url)
 		{
-			return Sas.Net.ClientSocket.Connect (url);
+			var config = new Sas.Net.WebsocketMgr.Config ();
+			config.url = new System.Uri (url);
+			return socket_mgr.Connection (config);
 		}
 			
 		public void AddHnadleErr(
@@ -50,6 +53,7 @@ namespace DC
 		void Awake ()
 		{
 			platform = new Sas.User (Config.host_server, "public");
+			socket_mgr = new Sas.Net.WebsocketMgr ();
 
 			AddHnadleErr (new System.Text.RegularExpressions.Regex (".*"), (erq, err) => {
 				if(string.IsNullOrEmpty(err.Message))
