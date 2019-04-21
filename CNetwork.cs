@@ -19,6 +19,8 @@ namespace DC
 
 		public Sas.User platform { get; private set; }
 
+		public Sas.Net.WebsocketMgr socket_mgr { get; private set; }
+
 		public bool ContainHandleErr(System.Exception e)
 		{
 			if (e is Sas.Net.ExceptionReq == false)
@@ -32,11 +34,12 @@ namespace DC
 			return false;
 		}
 
-		public Sas.Net.WebsocketMgr socket_mgr { get; private set; }
-		public static IObservable<Sas.Net.Websocket> ConnectRelay (string url)
+
+		public IObservable<Sas.Net.Websocket> ConnectRelay (string url)
 		{
 			var config = new Sas.Net.WebsocketMgr.Config ();
 			config.url = new System.Uri (url);
+			config.coockie.Add ("sas-accesstoken", this.platform.context.token);
 			return socket_mgr.Connection (config);
 		}
 			
