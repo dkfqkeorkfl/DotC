@@ -50,38 +50,38 @@ namespace DC
 
 			DC.CNetwork.s.platform.account.Authentication ()
 				.SelectMany (err => {
-					if (Sas.Net.COMMAND.OK == err) {
-						var login_param = new Sas.Data.AccountLoginParam ();
-						var email = new System.Security.SecureString ();
-						"dltmdgud@nate.com".ToList ().ForEach (c => email.AppendChar (c));
-						login_param.email = email;
+				if (Sas.Net.COMMAND.OK == err) {
+					var login_param = new Sas.Data.AccountLoginParam ();
+					var email = new System.Security.SecureString ();
+					"dltmdgud@nate.com".ToList ().ForEach (c => email.AppendChar (c));
+					login_param.email = email;
 
-						var password = new System.Security.SecureString ();
-						"QAZqaz5033!@".ToList ().ForEach (c => password.AppendChar (c));
-						login_param.password = password;
+					var password = new System.Security.SecureString ();
+					"QAZqaz5033!@".ToList ().ForEach (c => password.AppendChar (c));
+					login_param.password = password;
 
-						return DC.CNetwork.s.platform.account.Login (login_param);
-					} else
-						throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCode(), "make sure that authentication.");
-				})
+					return DC.CNetwork.s.platform.account.Login (login_param);
+				} else
+					throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCode (), "make sure that authentication.");
+			})
 				.SelectMany (_ => {
-					return DC.CNetwork.s.platform.account.AccessOpen ();
-				})
-				.SelectMany(_=> {
-					return DC.CNetwork.s.ConnectRelay("wss://localhost:8080/");
-				})
-				.SelectMany(socket=> {
-					return socket.Send(2, "111")
-						.SelectMany(success=> {
-							return socket.Recv();
-						});
-				})
-				.Subscribe(protocol=> {
-					Debug.Log(protocol.utc);
-				},
-					exc=> {
-						Debug.Log(exc);
-					});
+				return DC.CNetwork.s.platform.account.AccessOpen ();
+			});
+//				.SelectMany(_=> {
+//					return DC.CNetwork.s.ConnectRelay("wss://localhost:8080/");
+//				})
+//				.SelectMany(socket=> {
+//					return socket.Send(2, "111")
+//						.SelectMany(success=> {
+//							return socket.Recv();
+//						});
+//				})
+//				.Subscribe(protocol=> {
+//					Debug.Log(protocol.utc);
+//				},
+//					exc=> {
+//						Debug.Log(exc);
+//					});
 //					mSocket = mRequest.MakeSocket ("wss://localhost:3700/dsadasda");
 //					mSocket.on_connect += (bool ret) => { 
 //						Debug.Log (ret);

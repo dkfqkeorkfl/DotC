@@ -19,7 +19,7 @@ namespace DC
 
 		public Sas.User platform { get; private set; }
 
-		public Sas.Net.WebsocketMgr socket_mgr { get; private set; }
+//		public Sas.Net.WebsocketMgr socket_mgr { get; private set; }
 
 		public bool ContainHandleErr(System.Exception e)
 		{
@@ -35,13 +35,13 @@ namespace DC
 		}
 
 
-		public IObservable<Sas.Net.Websocket> ConnectRelay (string url)
-		{
-			var config = new Sas.Net.WebsocketMgr.Config ();
-			config.url = new System.Uri (url);
-			config.coockie.Add ("sas-accesstoken", this.platform.context.token);
-			return socket_mgr.Connection (config);
-		}
+//		public IObservable<Sas.Net.Websocket> ConnectRelay (string url)
+//		{
+//			var config = new Sas.Net.WebsocketMgr.Config ();
+//			config.url = new System.Uri (url);
+//			config.coockie.Add ("sas-accesstoken", this.platform.context.token);
+//			return socket_mgr.Connection (config);
+//		}
 			
 		public void AddHnadleErr(
 			System.Text.RegularExpressions.Regex rgx, 
@@ -56,7 +56,7 @@ namespace DC
 		void Awake ()
 		{
 			platform = new Sas.User (Config.host_server, "public");
-			socket_mgr = new Sas.Net.WebsocketMgr ();
+//			socket_mgr = new Sas.Net.WebsocketMgr ();
 
 			AddHnadleErr (new System.Text.RegularExpressions.Regex (".*"), (erq, err) => {
 				if(string.IsNullOrEmpty(err.Message))
