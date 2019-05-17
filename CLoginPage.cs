@@ -35,7 +35,7 @@ namespace DC {
                     return DC.CNetwork.s.platform.account.Authentication ();
                 })
                 .SelectMany (err => {
-                    if (Sas.Net.COMMAND.OK == err) {
+                    if ("ok" == err) {
                         var login_param = new Sas.Data.AccountLoginParam ();
                         var email = new System.Security.SecureString ();
                         mAccountIDFld.text.ToList ().ForEach (c => email.AppendChar (c));
