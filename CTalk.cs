@@ -4,26 +4,44 @@ using UnityEngine;
 
 namespace DC
 {
-	public class CTalk : MonoBehaviour {
+	public class CTalk : MonoBehaviour
+	{
+		public enum TYPE
+		{
+			NONE,
+			ME,
+			OTHER,
+			NOTICE,
+		}
 
-		bool mIsMe = true;
+		public TYPE mType = TYPE.NONE;
 
-		public bool is_me {
+		public TYPE type {
 			get {
-				return mIsMe;
+				return mType;
 			}
 			set { 
-				mIsMe = value;
-				if (mIsMe) {
+				mType = value;
+				switch (mType) {
+				case TYPE.ME: 
 					nick_comp.color = new Color32 (0, 0, 255, 255);
 					conversation_comp.color = new Color32 (0, 0, 255, 255);
+					break;
+				case TYPE.OTHER: 
+					break;
+				case TYPE.NOTICE: 
+					break;
+
 				}
 			}
 		}
 
 		private UnityEngine.UI.Text nick_comp { 
 			get {
-				return transform.Find ("Nick").GetComponent<UnityEngine.UI.Text> ();
+				if (type == TYPE.ME || type == TYPE.OTHER)
+					return transform.Find ("Nick").GetComponent<UnityEngine.UI.Text> ();
+				;
+				return null;
 			}
 		}
 
@@ -35,10 +53,14 @@ namespace DC
 
 		public string nick {
 			set {
-				nick_comp.text = value;
+				if (type == TYPE.ME || type == TYPE.OTHER)
+					nick_comp.text = value;
 			}
 			get { 
-				return nick_comp.text;
+				if (type == TYPE.ME || type == TYPE.OTHER)
+					return nick_comp.text;
+				
+				return "";
 			}
 		}
 

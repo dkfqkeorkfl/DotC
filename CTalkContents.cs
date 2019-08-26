@@ -26,12 +26,13 @@ namespace DC
 		}
 
 		public int count { get; private set; }
-		public void Add (CTalk talk)
+		public void Add (MonoBehaviour talk)
 		{
 			count += 1;
 			rectTranform.sizeDelta = new Vector2 (0, minest_height + height_talks);
 			UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate (rectTranform);
-			height_talks += talk.height + GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().spacing;
+			var height = (talk.transform as UnityEngine.RectTransform).rect.height;
+			height_talks += height + GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().spacing;
 
 			var height_updated = Mathf.Max (minest_height, height_talks);
 			rectTranform.sizeDelta = new Vector2 (0, height_updated);

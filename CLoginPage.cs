@@ -30,7 +30,6 @@ namespace DC {
         void RegistLogin () {
             mLoginBtn
                 .OnClickAsOptional ()
-
                 .SelectMany (_ => {
                     return DC.CNetwork.s.platform.account.Authentication ();
                 })
