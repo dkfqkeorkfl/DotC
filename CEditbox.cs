@@ -14,6 +14,9 @@ namespace DC
 	{
 		Transform mContents;
 		Sas.Net.Websocket socket;
+		UnityEngine.UI.Button mBtnLastMatch = null;
+
+		public ulong current_chat_id { get; private set; }
 
 		void ObserveEdit ()
 		{
@@ -47,12 +50,12 @@ namespace DC
 
 		System.IDisposable connection;
 
-		void Connect ()
+		void Connect (int retry = 0)
 		{
 			if (connection != null)
 				connection.Dispose ();
-			if (this.socket != null && this.socket.is_connected)
-				this.socket.Close ();
+//			if (this.socket != null && this.socket.is_connected)
+//				this.socket.Close ();
 			
 			connection = UniRx.Observable.Range (0, 1)
 				.SelectMany (_ => {
@@ -82,7 +85,7 @@ namespace DC
 			})
 				.SelectMany (_ => {
 				if (this.socket != null && this.socket.is_connected)
-					return UniRx.Observable.Range (0, 1).Select (__ => socket);
+					return UniRx.Observable.Range (0, 1).Select (__ => this.socket);
 				return DC.CNetwork.s.platform.MakeWS ("wss://localhost:8080/");
 			})
 				.SelectMany (socket => {
@@ -93,90 +96,164 @@ namespace DC
 				.Subscribe (_ => {
 			},
 				err => {
+					Debug.LogError (err.Message);
+					AttachMatchBtn ();
+				});
+		}
+
+		UniRx.IObservable<bool> InitRecommand (ulong current, UnityEngine.UI.VerticalLayoutGroup inst)
+		{
+			return UniRx.Observable.Range (0, 1)
+				.SelectMany (_ => {
+				var likes = inst.transform.FindDST (child => child.name == "likes").GetComponent<UnityEngine.UI.Button> ();
+				var unlikes = inst.transform.FindDST (child => child.name == "unlikes").GetComponent<UnityEngine.UI.Button> ();
+				return UniRx.Observable.Range (1, 2).Select (i => {
+					switch (i) {
+					case 1:
+						return likes.OnClickAsOptional ().Select (__ => i);
+					case 2:
+						return unlikes.OnClickAsOptional ().Select (__ => i);
+					}
+					return UniRx.Observable.Range (0, 1);
+				})
+						.SelectMany (exce => exce)
+						.SelectMany (i => {
+					if (i == 0)
+						return UniRx.Observable.Range (0, 0).Select (__ => true);
+
+					likes.enabled = false;
+					unlikes.enabled = false;
+					return DC.CNetwork.s.chatti.Likes (current, i == 1);
+				});
+			});
+		}
+
+		void AttachRecommand (ulong current)
+		{
+			UniRx.Observable.Range (0, 1)
+				.SelectMany (_ => {
+				var prefab = Resources.Load<UnityEngine.UI.VerticalLayoutGroup> ("Prefabs/recommand");
+				var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
+				mContents.GetComponent<DC.CTalkContents> ().Add (inst);
+				return InitRecommand (current, inst)
+						.Catch<bool, System.Exception> (err => {
+
+					var serr = err as Sas.Exception;
+					if (serr == null || serr.code != Sas.ERRNO.ALREADY_SETTED.ToErrCode ()) {
+						var likes = inst.transform.FindDST (child => child.name == "likes").GetComponent<UnityEngine.UI.Button> ();
+						var unlikes = inst.transform.FindDST (child => child.name == "unlikes").GetComponent<UnityEngine.UI.Button> ();
+						likes.enabled = true;
+						unlikes.enabled = true;
+					}
+
+					return InitRecommand (current, inst);
+				});
+			})
+				.First ()
+				.Subscribe (_ => {
+			}, 
+				err => {
 					Debug.LogError (err);
-					Connect ();
 				});
 		}
 
 		void AttachMatchBtn ()
 		{
-			UniRx.Observable.Range(0,1)
-				.Delay(new System.TimeSpan(1))
-				.Do(_=> {
-					var prefab = Resources.Load<UnityEngine.UI.Button> ("Prefabs/btn_chat_one");
-					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
-					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
-					inst.OnClickAsOptional ()
-						.Subscribe (__ => {
-							inst.enabled = false;
-							Connect ();
-						});
-				})
-				.Subscribe(_=> {}, 
-					err=> {
-						Debug.LogError(err);
-						AttachMatchBtn ();
-					});
+			if (mBtnLastMatch != null) {
+				mBtnLastMatch.enabled = false;
+			}
+
+			if (this.current_chat_id != 0) {
+				AttachRecommand (this.current_chat_id);
+				this.current_chat_id = 0;
+			}
+			
+			// to delay 1 frame
+			UniRx.Observable.Range (0, 1)
+				.Delay (new System.TimeSpan (1))
+							.SelectMany (_ => {
+				AttachNotice ("for starting, please click the matching button");
+				var prefab = Resources.Load<UnityEngine.UI.Button> ("Prefabs/btn_chat_one");
+				mBtnLastMatch = UnityEngine.GameObject.Instantiate (prefab, mContents);
+				mContents.GetComponent<DC.CTalkContents> ().Add (mBtnLastMatch);
+				return mBtnLastMatch.OnClickAsOptional ();
+			})
+				.First ()
+				.Do (__ => {
+				
+				mBtnLastMatch.enabled = false;
+				Connect ();
+			})
+				.Subscribe (_ => {
+			}, 
+				err => {
+					Debug.LogError (err);
+					AttachMatchBtn ();
+				});
+		}
+
+		void AttachNotice (string str)
+		{
+			var prefab = Resources.Load<DC.CTalk> ("Prefabs/Notice");
+			var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
+			var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
+			inst.type = DC.CTalk.TYPE.NOTICE;
+			inst.conversation = str;
+			mContents.GetComponent<DC.CTalkContents> ().Add (inst);
 		}
 
 		void Awake ()
 		{
-			if (!DC.CNetwork.s.platform.context.handler.Has ("/dc/chat/matched")) {
-				DC.CNetwork.s.platform.context.handler.Add ("/dc/chat/matched", token => {
-					var prefab = Resources.Load<DC.CTalk> ("Prefabs/Notice");
-					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
-					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
-					inst.type = DC.CTalk.TYPE.NOTICE;
-					inst.conversation = "good luck. you can tell with stranger now.";
-					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
+			current_chat_id = 0;
+			if (!DC.CNetwork.s.handler.Has ("/dc/chat/matched")) {
+				DC.CNetwork.s.handler.Add ("/dc/chat/matched", token => {
+					var obj = token as Newtonsoft.Json.Linq.JObject;
+					this.current_chat_id = (ulong)obj ["room_idx"];
+					AttachNotice ("good luck. you can tell with stranger now.");
 				});
 			}
 
-			if (!DC.CNetwork.s.platform.context.handler.Has ("/dc/chat/join")) {
-				DC.CNetwork.s.platform.context.handler.Add ("/dc/chat/join", token => {
+
+			if (!DC.CNetwork.s.handler.Has ("/dc/chat/join")) {
+				DC.CNetwork.s.handler.Add ("/dc/chat/join", token => {
 					var value = token as Newtonsoft.Json.Linq.JValue;
 					var success = (bool)value;
 					if (success) {
-						var prefab = Resources.Load<DC.CTalk> ("Prefabs/Notice");
-						var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
-						var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
-						inst.type = DC.CTalk.TYPE.NOTICE;
-						inst.conversation = "starting match with new stranger. please waiting a second.";
-						mContents.GetComponent<DC.CTalkContents> ().Add (inst);
-						
+						AttachNotice ("starting match with new stranger. please waiting a second.");
 					} else {
 						AttachMatchBtn ();
 					}
 				});
 			}
 
-			if (!DC.CNetwork.s.platform.context.handler.Has ("/dc/chat/recv")) {
-				DC.CNetwork.s.platform.context.handler.Add ("/dc/chat/recv", token => {
-					var text = (string)token;
+			if (!DC.CNetwork.s.handler.Has ("/dc/chat/recv")) {
+				DC.CNetwork.s.handler.Add ("/dc/chat/recv", token => {
+					var obj = (Newtonsoft.Json.Linq.JObject)token;
+					var nick = obj ["nick"];
+					var chat = obj ["chat"];
+
 					var prefab = Resources.Load<DC.CTalk> ("Prefabs/Talk");
 					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
 					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
 					inst.type = DC.CTalk.TYPE.OTHER;
-					inst.conversation = text;
+					inst.nick = nick != null ? (string)nick : "";
+					inst.conversation = (string)chat;
 					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
 				});
 			}
 
-			if (!DC.CNetwork.s.platform.context.handler.Has ("/dc/chat/leave")) {
-				DC.CNetwork.s.platform.context.handler.Add ("/dc/chat/leave", token => {
-					var prefab = Resources.Load<DC.CTalk> ("Prefabs/Notice");
-					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
-					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
-					inst.type = DC.CTalk.TYPE.NOTICE;
-					inst.conversation = "your chatting is exit. please match again";
-					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
+			if (!DC.CNetwork.s.handler.Has ("/dc/chat/leave")) {
+				DC.CNetwork.s.handler.Add ("/dc/chat/leave", token => {
+					AttachNotice ("your chatting is exit. please match again");
 					AttachMatchBtn ();
 				});
 			}
 				
 			mContents = GameObject.Find ("Content").transform;
 			ObserveEdit ();
+
 			AttachMatchBtn ();
+
 		}
 	}
 
