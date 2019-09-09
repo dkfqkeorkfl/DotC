@@ -19,6 +19,12 @@ namespace DC
 		= new LinkedList<KeyValuePair<System.Text.RegularExpressions.Regex, Action<System.Net.HttpWebRequest, System.Exception>>> ();
 
 		public Sas.User platform { get; private set; }
+		public DC.COMPONENET.Chatti chatti { get; private set; }
+		public Sas.Net.ProtocolHandler handler {
+			get {
+				return platform.context.handler;
+			}
+		}
 
 		public bool ContainHandleErr (System.Exception e)
 		{
@@ -46,11 +52,19 @@ namespace DC
 		void Awake ()
 		{
 			platform = new Sas.User (Config.host_server, "cert");
+			chatti = new DC.COMPONENET.Chatti (platform.context);
+
 			AddHnadleErr (new System.Text.RegularExpressions.Regex (".*"), (erq, err) => {
+				CCommonPopup popup = null;
+				if (CModal.CountIf (p => p.kind == "popup_network_alram") > 0)
+					return;
 				if (string.IsNullOrEmpty (err.Message))
-					CModal.Make ("", err.ToErrstrOfSas ()).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
+					popup = CModal.Make ("", err.ToErrstrOfSas ());
 				else
-					CModal.Make ("", err.Message).onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
+					popup = CModal.Make ("", err.Message);
+
+				popup.onHandleBtn += (p, str) => p.Close ();
+				popup.kind = "popup_network_alram";
 			});
 
 			platform.requester_post_handler += (req, res, err) => {

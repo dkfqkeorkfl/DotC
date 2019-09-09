@@ -13,6 +13,8 @@ namespace DC
 
 		public event Action onClose;
 
+		public string kind { get; set; }
+
 		public int depth {
 			set { mCanvas.sortingOrder = value; }
 			get { return mCanvas.sortingOrder; }

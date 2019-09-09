@@ -16,7 +16,13 @@ namespace DC
 		public readonly LinkedList<CPopup> mPopups = new LinkedList<CPopup> ();
 
 		public int viewed { get { return mPopups.Where (data => data.visible).Count (); } }
+
 		public int created { get { return mPopups.Count; } }
+
+		public static int CountIf (System.Predicate<CPopup> pred)
+		{
+			return s.mPopups.Where (popup => pred (popup)).Count ();
+		}
 
 		public static T Make<T> (Transform view) where T : CPopup
 		{
@@ -32,7 +38,7 @@ namespace DC
 			var popup = inst.AddComponent<T> ();
 			popup.Init (inst.GetComponent<Canvas> ());
 			popup.onClose += () => { 
-				mPopups.Remove(popup);
+				mPopups.Remove (popup);
 			};
 			if (view != null)
 				popup.view = view;
