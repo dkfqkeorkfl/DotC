@@ -103,27 +103,56 @@ namespace DC
 
 		UniRx.IObservable<bool> InitRecommand (ulong current, UnityEngine.UI.VerticalLayoutGroup inst)
 		{
+			var v = DC.CNetwork.s.platform.context.local_db.Get ("confirm_color");
+			var obj = (Newtonsoft.Json.Linq.JObject)v;
+			var colorstr = ((string)obj ["value"]).Split (new char[]{ ',' });
+			var color = new Color (float.Parse (colorstr [0]), float.Parse (colorstr [1]), float.Parse (colorstr [2]), float.Parse (colorstr [3]));
+				
+			var likes = inst.transform.FindDST (child => child.name == "likes");
+			var unlikes = inst.transform.FindDST (child => child.name == "unlikes");
+
 			return UniRx.Observable.Range (0, 1)
 				.SelectMany (_ => {
-				var likes = inst.transform.FindDST (child => child.name == "likes").GetComponent<UnityEngine.UI.Button> ();
-				var unlikes = inst.transform.FindDST (child => child.name == "unlikes").GetComponent<UnityEngine.UI.Button> ();
 				return UniRx.Observable.Range (1, 2).Select (i => {
 					switch (i) {
 					case 1:
-						return likes.OnClickAsOptional ().Select (__ => i);
+						return likes.GetComponent<UnityEngine.UI.Button> ()
+								.OnClickAsOptional ()
+								.Select (__ => {
+									
+							likes.GetComponent<UnityEngine.UI.Image> ().color = color;
+							
+							return i;
+						});
 					case 2:
-						return unlikes.OnClickAsOptional ().Select (__ => i);
+						return unlikes.GetComponent<UnityEngine.UI.Button> ()
+								.OnClickAsOptional ()
+								.Select (__ => {
+							unlikes.GetComponent<UnityEngine.UI.Image> ().color = color;
+							
+							return i;
+						});
 					}
 					return UniRx.Observable.Range (0, 1);
 				})
 						.SelectMany (exce => exce)
 						.SelectMany (i => {
-					if (i == 0)
-						return UniRx.Observable.Range (0, 0).Select (__ => true);
+					likes.GetComponent<UnityEngine.UI.Button> ().enabled = false;
+					unlikes.GetComponent<UnityEngine.UI.Button> ().enabled = false;
 
-					likes.enabled = false;
-					unlikes.enabled = false;
-					return DC.CNetwork.s.chatti.Likes (current, i == 1);
+					return DC.CNetwork.s.chatti.Likes (current, i == 1)
+						.Catch<bool, System.Exception> (err => {
+						var serr = err as Sas.Exception;
+						if (serr == null || serr.code != Sas.ERRNO.ALREADY_SETTED.ToErrCode ()) {
+							likes.GetComponent<UnityEngine.UI.Button> ().enabled = true;
+							unlikes.GetComponent<UnityEngine.UI.Button> ().enabled = true;
+							var src = (i == 1 ? unlikes : likes);
+							var dst = (i == 1 ? likes : unlikes);
+							dst.GetComponent<UnityEngine.UI.Image> ().color = src.GetComponent<UnityEngine.UI.Image> ().color;
+						}
+
+						return InitRecommand (current, inst);
+					});
 				});
 			});
 		}
@@ -135,19 +164,7 @@ namespace DC
 				var prefab = Resources.Load<UnityEngine.UI.VerticalLayoutGroup> ("Prefabs/recommand");
 				var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
 				mContents.GetComponent<DC.CTalkContents> ().Add (inst);
-				return InitRecommand (current, inst)
-						.Catch<bool, System.Exception> (err => {
-
-					var serr = err as Sas.Exception;
-					if (serr == null || serr.code != Sas.ERRNO.ALREADY_SETTED.ToErrCode ()) {
-						var likes = inst.transform.FindDST (child => child.name == "likes").GetComponent<UnityEngine.UI.Button> ();
-						var unlikes = inst.transform.FindDST (child => child.name == "unlikes").GetComponent<UnityEngine.UI.Button> ();
-						likes.enabled = true;
-						unlikes.enabled = true;
-					}
-
-					return InitRecommand (current, inst);
-				});
+				return InitRecommand (current, inst);
 			})
 				.First ()
 				.Subscribe (_ => {
@@ -178,9 +195,13 @@ namespace DC
 				mContents.GetComponent<DC.CTalkContents> ().Add (mBtnLastMatch);
 				return mBtnLastMatch.OnClickAsOptional ();
 			})
+				.Catch<UniRx.Unit, System.Exception> (err => {
+				AttachMatchBtn ();
+				throw err;
+				return UniRx.Observable.Range (0, 1).Select (_ => UniRx.Unit.Default);
+			})
 				.First ()
 				.Do (__ => {
-				
 				mBtnLastMatch.enabled = false;
 				Connect ();
 			})
@@ -188,9 +209,11 @@ namespace DC
 			}, 
 				err => {
 					Debug.LogError (err);
-					AttachMatchBtn ();
+					if (mBtnLastMatch != null)
+						mBtnLastMatch.enabled = true;
 				});
 		}
+
 
 		void AttachNotice (string str)
 		{
@@ -199,7 +222,10 @@ namespace DC
 			var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
 			inst.type = DC.CTalk.TYPE.NOTICE;
 			inst.conversation = str;
-			mContents.GetComponent<DC.CTalkContents> ().Add (inst);
+
+			var comp = mContents.GetComponent<DC.CTalkContents> ();
+			if (comp != null)
+				comp.Add (inst);
 		}
 
 		void Awake ()
@@ -212,7 +238,6 @@ namespace DC
 					AttachNotice ("good luck. you can tell with stranger now.");
 				});
 			}
-
 
 			if (!DC.CNetwork.s.handler.Has ("/dc/chat/join")) {
 				DC.CNetwork.s.handler.Add ("/dc/chat/join", token => {
