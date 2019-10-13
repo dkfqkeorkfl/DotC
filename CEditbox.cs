@@ -34,7 +34,10 @@ namespace DC
 				var prefab = Resources.Load<DC.CTalk> ("Prefabs/Talk");
 				var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
 				var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
-				inst.nick = "11";
+				var obj = DC.CNetwork.s.platform.context.local_db.Get ("txt_me_viewed") as Newtonsoft.Json.Linq.JObject;
+
+				inst.type = DC.CTalk.TYPE.ME;
+				inst.nick = (string)obj ["value"];
 				inst.conversation = x;
 				inst.type = DC.CTalk.TYPE.ME;
 				mContents.GetComponent<DC.CTalkContents> ().Add (inst);
@@ -54,13 +57,11 @@ namespace DC
 		{
 			if (connection != null)
 				connection.Dispose ();
-//			if (this.socket != null && this.socket.is_connected)
-//				this.socket.Close ();
 			
-			connection = UniRx.Observable.Range (0, 1)
+			connection = Sas.SasUtil.StartRx ()
 				.SelectMany (_ => {
 				if (DC.CNetwork.s.platform.context.token != null)
-					return UniRx.Observable.Range (0, 1);
+					return Sas.SasUtil.StartRx ();
 
 				return DC.CNetwork.s.platform.account.Authentication ()
 						.SelectMany (err => {
@@ -71,7 +72,7 @@ namespace DC
 						login_param.email = email;
 
 						var password = new System.Security.SecureString ();
-						"QAZqaz5033!@".ToList ().ForEach (c => password.AppendChar (c));
+						"QAZqaz1289!@".ToList ().ForEach (c => password.AppendChar (c));
 						login_param.password = password;
 
 						return DC.CNetwork.s.platform.account.Login (login_param);
@@ -85,7 +86,7 @@ namespace DC
 			})
 				.SelectMany (_ => {
 				if (this.socket != null && this.socket.is_connected)
-					return UniRx.Observable.Range (0, 1).Select (__ => this.socket);
+					return Sas.SasUtil.StartRx ().Select (__ => this.socket);
 				return DC.CNetwork.s.platform.MakeWS ("wss://localhost:8080/");
 			})
 				.SelectMany (socket => {
@@ -96,6 +97,12 @@ namespace DC
 				.Subscribe (_ => {
 			},
 				err => {
+					var error = err as Sas.Exception;
+					if (error != null) {
+						Debug.LogError (error.ToErrstrOfDC ());
+						Debug.LogError (error.ToErrnoOfSas ());
+					}
+
 					Debug.LogError (err.Message);
 					AttachMatchBtn ();
 				});
@@ -103,15 +110,14 @@ namespace DC
 
 		UniRx.IObservable<bool> InitRecommand (ulong current, UnityEngine.UI.VerticalLayoutGroup inst)
 		{
-			var v = DC.CNetwork.s.platform.context.local_db.Get ("confirm_color");
-			var obj = (Newtonsoft.Json.Linq.JObject)v;
-			var colorstr = ((string)obj ["value"]).Split (new char[]{ ',' });
-			var color = new Color (float.Parse (colorstr [0]), float.Parse (colorstr [1]), float.Parse (colorstr [2]), float.Parse (colorstr [3]));
+			var obj = DC.CNetwork.s.platform.context.local_db.Get ("confirm_color") as Newtonsoft.Json.Linq.JObject;
+			var vec = Sas.SasUtil.CovertTxtToVec4 ((string)obj ["value"]);
+			var color = new Color (vec.x, vec.y, vec.z, vec.w);
 				
 			var likes = inst.transform.FindDST (child => child.name == "likes");
 			var unlikes = inst.transform.FindDST (child => child.name == "unlikes");
 
-			return UniRx.Observable.Range (0, 1)
+			return Sas.SasUtil.StartRx ()
 				.SelectMany (_ => {
 				return UniRx.Observable.Range (1, 2).Select (i => {
 					switch (i) {
@@ -133,7 +139,7 @@ namespace DC
 							return i;
 						});
 					}
-					return UniRx.Observable.Range (0, 1);
+					return Sas.SasUtil.StartRx ();
 				})
 						.SelectMany (exce => exce)
 						.SelectMany (i => {
@@ -159,7 +165,7 @@ namespace DC
 
 		void AttachRecommand (ulong current)
 		{
-			UniRx.Observable.Range (0, 1)
+			Sas.SasUtil.StartRx ()
 				.SelectMany (_ => {
 				var prefab = Resources.Load<UnityEngine.UI.VerticalLayoutGroup> ("Prefabs/recommand");
 				var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
@@ -186,7 +192,7 @@ namespace DC
 			}
 			
 			// to delay 1 frame
-			UniRx.Observable.Range (0, 1)
+			Sas.SasUtil.StartRx ()
 				.Delay (new System.TimeSpan (1))
 							.SelectMany (_ => {
 				AttachNotice ("for starting, please click the matching button");
@@ -198,7 +204,7 @@ namespace DC
 				.Catch<UniRx.Unit, System.Exception> (err => {
 				AttachMatchBtn ();
 				throw err;
-				return UniRx.Observable.Range (0, 1).Select (_ => UniRx.Unit.Default);
+				return Sas.SasUtil.StartRx ().Select (_ => UniRx.Unit.Default);
 			})
 				.First ()
 				.Do (__ => {
@@ -257,11 +263,12 @@ namespace DC
 					var nick = obj ["nick"];
 					var chat = obj ["chat"];
 
+					var dobj = DC.CNetwork.s.platform.context.local_db.Get ("txt_default_name") as Newtonsoft.Json.Linq.JObject;
 					var prefab = Resources.Load<DC.CTalk> ("Prefabs/Talk");
 					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
 					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
 					inst.type = DC.CTalk.TYPE.OTHER;
-					inst.nick = nick != null ? (string)nick : "";
+					inst.nick = (string)nick == "" ? (string)dobj ["value"] : (string)nick;
 					inst.conversation = (string)chat;
 					mContents.GetComponent<DC.CTalkContents> ().Add (inst);
 				});

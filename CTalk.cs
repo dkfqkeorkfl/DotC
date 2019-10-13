@@ -24,10 +24,32 @@ namespace DC
 				mType = value;
 				switch (mType) {
 				case TYPE.ME: 
-					nick_comp.color = new Color32 (0, 0, 255, 255);
-					conversation_comp.color = new Color32 (0, 0, 255, 255);
+					{
+						var obj = DC.CNetwork.s.platform.context.local_db.Get ("txt_me_color") as Newtonsoft.Json.Linq.JObject;
+						var vec = Sas.SasUtil.CovertTxtToVec4 ((string)obj ["value"]);
+						var color = new Color (vec.x, vec.y, vec.z, vec.w);
+						nick_comp.color = color;
+					}
+					{
+						var obj = DC.CNetwork.s.platform.context.local_db.Get ("txt_me_color") as Newtonsoft.Json.Linq.JObject;
+						var vec = Sas.SasUtil.CovertTxtToVec4 ((string)obj ["value"]);
+						var color = new Color (vec.x, vec.y, vec.z, vec.w);
+						conversation_comp.color = color;
+					}
 					break;
 				case TYPE.OTHER: 
+					{
+						var obj = DC.CNetwork.s.platform.context.local_db.Get ("txt_other_color") as Newtonsoft.Json.Linq.JObject;
+						var vec = Sas.SasUtil.CovertTxtToVec4 ((string)obj ["value"]);
+						var color = new Color (vec.x, vec.y, vec.z, vec.w);
+						nick_comp.color = color;
+					}
+					{
+						var obj = DC.CNetwork.s.platform.context.local_db.Get ("txt_other_color") as Newtonsoft.Json.Linq.JObject;
+						var vec = Sas.SasUtil.CovertTxtToVec4 ((string)obj ["value"]);
+						var color = new Color (vec.x, vec.y, vec.z, vec.w);
+						conversation_comp.color = color;
+					}
 					break;
 				case TYPE.NOTICE: 
 					break;
@@ -40,7 +62,6 @@ namespace DC
 			get {
 				if (type == TYPE.ME || type == TYPE.OTHER)
 					return transform.Find ("Nick").GetComponent<UnityEngine.UI.Text> ();
-				;
 				return null;
 			}
 		}

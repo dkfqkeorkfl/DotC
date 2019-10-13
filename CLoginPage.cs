@@ -49,17 +49,11 @@ namespace DC {
 						throw new Sas.Exception (Sas.ERRNO.MESSAGE.ToErrCode(), "make sure that authentication.");
                 })
                 .SelectMany (_ => DC.CNetwork.s.platform.account.AccessOpen ())
-                .SelectMany (_ => DC.CNetwork.s.platform.account.DumpAutoLogin ("test"))
-//                .SelectMany (_ => {
-//                    var login = new Sas.Data.AccountLoginParam ();
-//                    login.sns = Sas.Data.SNS.AUTO;
-//                    login.extension = "test";
-//                    return DC.CNetwork.s.platform.account.Login (login);
-//                })
+				.SelectMany (_ => DC.CNetwork.s.platform.account.DumpAutoLogin (Config.acccount_file_name))
             	.Repeat ()
                 .Subscribe (ret => {
-                        CModal.Make ("", "success").onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
-                        //Debug.Log ("success");
+					UnityEngine.SceneManagement.SceneManager.LoadScene("Dotchatti");
+//                        CModal.Make ("", "success").onHandleBtn += (CPopup arg1, string arg2) => arg1.Close ();
                     },
                     err => {
                         if (!CNetwork.s.ContainHandleErr (err)) {
