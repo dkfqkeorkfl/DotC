@@ -32,7 +32,7 @@ namespace DC
 				input.text = "";
 
 				var prefab = Resources.Load<DC.CTalk> ("Prefabs/Talk");
-				var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
+				var inst = Instantiate (prefab, mContents);
 				var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
 				var obj = DC.CNetwork.s.platform.context.local_db.Get ("txt_me_viewed") as Newtonsoft.Json.Linq.JObject;
 
@@ -168,7 +168,7 @@ namespace DC
 			Sas.SasUtil.StartRx ()
 				.SelectMany (_ => {
 				var prefab = Resources.Load<UnityEngine.UI.VerticalLayoutGroup> ("Prefabs/recommand");
-				var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
+				var inst = Instantiate(prefab, mContents);
 				mContents.GetComponent<DC.CTalkContents> ().Add (inst);
 				return InitRecommand (current, inst);
 			})
@@ -197,7 +197,7 @@ namespace DC
 							.SelectMany (_ => {
 				AttachNotice ("for starting, please click the matching button");
 				var prefab = Resources.Load<UnityEngine.UI.Button> ("Prefabs/btn_chat_one");
-				mBtnLastMatch = UnityEngine.GameObject.Instantiate (prefab, mContents);
+				mBtnLastMatch = Instantiate(prefab, mContents);
 				mContents.GetComponent<DC.CTalkContents> ().Add (mBtnLastMatch);
 				return mBtnLastMatch.OnClickAsOptional ();
 			})
@@ -224,7 +224,7 @@ namespace DC
 		void AttachNotice (string str)
 		{
 			var prefab = Resources.Load<DC.CTalk> ("Prefabs/Notice");
-			var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
+			var inst = Instantiate(prefab, mContents);
 			var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
 			inst.type = DC.CTalk.TYPE.NOTICE;
 			inst.conversation = str;
@@ -265,7 +265,7 @@ namespace DC
 
 					var dobj = DC.CNetwork.s.platform.context.local_db.Get ("txt_default_name") as Newtonsoft.Json.Linq.JObject;
 					var prefab = Resources.Load<DC.CTalk> ("Prefabs/Talk");
-					var inst = UnityEngine.GameObject.Instantiate (prefab, mContents);
+					var inst = Instantiate (prefab, mContents);
 					var padding = mContents.GetComponent<UnityEngine.UI.VerticalLayoutGroup> ().padding;
 					inst.type = DC.CTalk.TYPE.OTHER;
 					inst.nick = (string)nick == "" ? (string)dobj ["value"] : (string)nick;
