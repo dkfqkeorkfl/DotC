@@ -1,14 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UniRx;
-public class DcCamera : MonoBehaviour
+public class DcCamera : MonoBehaviour, DC.Activator
 {
     public Transform cameraTarget;
     public TouchScript.Gestures.TransformGestures.ScreenTransformGesture ManipulationGesture;
-    
+
     private float x = 0.0f;
     private float y = 0.0f;
 
+    public bool is_active { get; private set; }
     public float mouseXSpeedMod = 0.01f;
     public float mouseySpeedMod = 0.01f;
 
@@ -22,6 +23,8 @@ public class DcCamera : MonoBehaviour
     private float currentDistance;
 
     public float cameraTargetHeight = 1.0f;
+
+    Vector3 gesture;
 
     // Use this for initialization
     void Start()
@@ -37,7 +40,6 @@ public class DcCamera : MonoBehaviour
 
     void LateUpdate()
     {
-
         //if (Input.GetMouseButton(1))
         //{
         //    x += Input.GetAxis("Mouse X") * mouseXSpeedMod;
@@ -65,6 +67,10 @@ public class DcCamera : MonoBehaviour
         {
             x += gesture.x * mouseXSpeedMod;
             y -= gesture.y * mouseySpeedMod;
+        }
+        else if(ManipulationGesture.NumPointers == 0)
+        {
+            is_active = false;
         }
 
         y = ClampAngle(y, -30, 30);
@@ -113,25 +119,19 @@ public class DcCamera : MonoBehaviour
 
     private void OnEnable()
     {
+        is_active = false;
         ManipulationGesture.Transformed += manipulationTransformedHandler;
     }
 
     private void OnDisable()
     {
+        is_active = false;
         ManipulationGesture.Transformed -= manipulationTransformedHandler;
     }
 
-    Vector3 gesture;
-    float mScale = 1.0f;
     private void manipulationTransformedHandler(object sender, System.EventArgs e)
     {
-        if (ManipulationGesture.NumPointers == 1)
-        {
-            mScale = 1.0f;
-        }
-        if (ManipulationGesture.NumPointers < 2)
-            return;
-
+        is_active = true;
         var x = ManipulationGesture.ActivePointers[1].Position.x - ManipulationGesture.ActivePointers[0].Position.x;
         var y = ManipulationGesture.ActivePointers[1].Position.y - ManipulationGesture.ActivePointers[0].Position.y;
         x %= 360;
@@ -139,9 +139,7 @@ public class DcCamera : MonoBehaviour
 
         gesture.x = x;
         gesture.y = y;
-        gesture.z = (ManipulationGesture.DeltaScale- 1);
-        Debug.Log(string.Format("x{0} y{1} z{2}", mScale, ManipulationGesture.DeltaScale, gesture.z));
-        mScale = ManipulationGesture.DeltaScale;
+        gesture.z = (ManipulationGesture.DeltaScale - 1);
     }
 }
 
